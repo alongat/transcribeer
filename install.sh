@@ -47,36 +47,13 @@ ok "ffmpeg $(ffmpeg -version 2>&1 | head -1 | awk '{print $3}')"
 mkdir -p "$BIN_DIR"
 cp "$REPO_DIR/capture-bin" "$BIN_DIR/capture-bin"
 chmod +x "$BIN_DIR/capture-bin"
-# Sign with entitlements required by ScreenCaptureKit on macOS 14+
 ENTITLEMENTS="$REPO_DIR/capture/capture.entitlements.plist"
 if command -v codesign &>/dev/null && [[ -f "$ENTITLEMENTS" ]]; then
   codesign --force --sign - --entitlements "$ENTITLEMENTS" "$BIN_DIR/capture-bin" 2>/dev/null || true
 fi
 ok "capture-bin installed → $BIN_DIR/capture-bin"
 
-# ── 5. GUI app ────────────────────────────────────────────────────────────────
-APP_DEST="/Applications/Transcribee.app"
-APP_BIN="$REPO_DIR/gui/.build/release/TranscribeeMenuBar"
-ENTITLEMENTS="$REPO_DIR/capture/capture.entitlements.plist"
-
-# Build if binary is missing or source is newer
-if [[ ! -f "$APP_BIN" ]] || [[ "$REPO_DIR/gui/Sources" -nt "$APP_BIN" ]]; then
-  echo "    Building GUI..."
-  (cd "$REPO_DIR/gui" && swift build -c release -q) || fail "GUI build failed"
-fi
-
-mkdir -p "$APP_DEST/Contents/MacOS"
-cp "$APP_BIN" "$APP_DEST/Contents/MacOS/TranscribeeMenuBar"
-cp "$REPO_DIR/gui/Info.plist" "$APP_DEST/Contents/"
-chmod +x "$APP_DEST/Contents/MacOS/TranscribeeMenuBar"
-
-# Sign (ad-hoc is fine for personal use)
-if command -v codesign &>/dev/null; then
-  codesign --force --sign - "$APP_DEST" 2>/dev/null || true
-fi
-ok "Transcribee.app installed → $APP_DEST"
-
-# ── 6. Python venv ────────────────────────────────────────────────────────────
+# ── 5. Python venv ────────────────────────────────────────────────────────────
 if ! command -v uv &>/dev/null; then
   echo "[!] uv not found — installing..."
   curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -90,14 +67,14 @@ ok "Python venv → $VENV"
 
 source "$VENV/bin/activate"
 
-uv pip install -q faster-whisper torch torchaudio typer rich requests openai anthropic
+uv pip install -q faster-whisper torch torchaudio typer rich requests openai anthropic rumps
 
-# ── 7. Diarization backend ────────────────────────────────────────────────────
+# ── 6. Diarization backend ────────────────────────────────────────────────────
 echo ""
 echo "Speaker diarization — choose backend:"
-echo "  (A) pyannote   — best quality, requires HuggingFace account"
+echo "  (A) pyannote    — best quality, requires HuggingFace account"
 echo "  (B) resemblyzer — no account needed, good quality"
-echo "  (N) none       — no speaker labels, fastest"
+echo "  (N) none        — no speaker labels, fastest"
 echo ""
 read -r -p "Choice [A/B/N]: " diar_choice
 
@@ -116,7 +93,6 @@ case "$(echo "$diar_choice" | tr '[:lower:]' '[:upper:]')" in
     mkdir -p "$HOME/.cache/huggingface"
     echo "$hf_token" > "$HOME/.cache/huggingface/token"
     chmod 600 "$HOME/.cache/huggingface/token"
-    # Validate
     http_code=$(curl -sf -o /dev/null -w "%{http_code}" \
       -H "Authorization: Bearer $hf_token" \
       "https://huggingface.co/api/whoami" || echo "000")
@@ -124,7 +100,6 @@ case "$(echo "$diar_choice" | tr '[:lower:]' '[:upper:]')" in
       ok "HuggingFace token valid"
     else
       echo "[!] Token validation returned HTTP $http_code — continuing anyway."
-      echo "    If model download fails, check your token and model terms acceptance."
     fi
     ;;
   B)
@@ -138,11 +113,11 @@ case "$(echo "$diar_choice" | tr '[:lower:]' '[:upper:]')" in
     ;;
 esac
 
-# ── 8. Install transcribee package ───────────────────────────────────────────
-uv pip install -q -e "$REPO_DIR"
+# ── 7. Install transcribee package ───────────────────────────────────────────
+uv pip install -q -e "$REPO_DIR[gui]"
 ok "transcribee package installed"
 
-# ── 9. Write config ───────────────────────────────────────────────────────────
+# ── 8. Write config ───────────────────────────────────────────────────────────
 mkdir -p "$TRANSCRIBEE_DIR/sessions"
 CONFIG_FILE="$TRANSCRIBEE_DIR/config.toml"
 
@@ -167,10 +142,11 @@ else
   info "Config already exists at $CONFIG_FILE — not overwritten"
 fi
 
-# ── 10. PATH setup ────────────────────────────────────────────────────────────
+# ── 9. PATH setup ─────────────────────────────────────────────────────────────
 mkdir -p "$LOCAL_BIN"
 ln -sf "$VENV/bin/transcribee" "$LOCAL_BIN/transcribee"
-ok "Symlink: $LOCAL_BIN/transcribee → $VENV/bin/transcribee"
+ln -sf "$VENV/bin/transcribee-gui" "$LOCAL_BIN/transcribee-gui"
+ok "Symlinks → $LOCAL_BIN/{transcribee,transcribee-gui}"
 
 if [[ ":$PATH:" != *":$LOCAL_BIN:"* ]]; then
   case "$SHELL" in
@@ -190,11 +166,9 @@ echo ""
 echo "=== Installation complete ==="
 echo ""
 echo "Usage:"
-echo "  transcribee run --duration 300    # record 5 min, transcribe, summarize"
+echo "  transcribee-gui                   # launch menubar app"
+echo "  transcribee run --duration 300    # record 5 min, transcribe, summarize (CLI)"
 echo "  transcribee record                # record until Ctrl+C"
 echo "  transcribee transcribe audio.wav  # transcribe existing file"
 echo "  transcribee --help                # all commands"
-echo ""
-echo "  To launch: open /Applications/Transcribee.app"
-echo "  To auto-start on login: add it in System Settings → General → Login Items"
 echo ""

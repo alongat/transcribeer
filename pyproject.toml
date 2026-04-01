@@ -17,9 +17,11 @@ anthropic = ["anthropic>=0.25"]
 resemblyzer = ["resemblyzer", "scikit-learn"]
 pyannote = ["pyannote.audio"]
 dev = ["pytest", "openai>=1", "anthropic>=0.25", "resemblyzer", "scikit-learn"]
+gui = ["rumps>=0.4"]
 
 [project.scripts]
 transcribee = "transcribee.cli:app"
+transcribee-gui = "transcribee.gui:main"
 
 [build-system]
 requires = ["hatchling"]
