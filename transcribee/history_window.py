@@ -563,12 +563,12 @@ class HistoryWindow:
         split.addSubview_(right)
         split.setPosition_ofDividerAtIndex_(280, 0)
 
-        # Load sessions
-        self._refresh_sessions()
-
         self._window = win
         self._left = left
         self._right = right
+
+        # Load sessions (must be after _right is set — selection callbacks fire immediately)
+        self._refresh_sessions()
 
     @objc.python_method
     def _refresh_sessions(self):
