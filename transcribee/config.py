@@ -4,7 +4,8 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-_CONFIG_PATH = Path.home() / ".transcribee" / "config.toml"
+def _config_path() -> Path:
+    return Path.home() / ".transcribee" / "config.toml"
 
 _DEFAULTS = {
     "transcription": {
@@ -49,8 +50,9 @@ class Config:
 def load() -> Config:
     """Load ~/.transcribee/config.toml. Missing keys use defaults. Never raises."""
     data: dict = {}
-    if _CONFIG_PATH.exists():
-        with open(_CONFIG_PATH, "rb") as f:
+    cfg_path = _config_path()
+    if cfg_path.exists():
+        with open(cfg_path, "rb") as f:
             data = tomllib.load(f)
 
     def get(section: str, key: str):
@@ -74,7 +76,8 @@ def load() -> Config:
 
 def save(cfg: Config) -> None:
     """Write cfg back to ~/.transcribee/config.toml (creates dirs as needed)."""
-    _CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    cfg_path = _config_path()
+    cfg_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Represent num_speakers: None -> 0 (auto)
     raw_speakers = 0 if cfg.num_speakers is None else cfg.num_speakers
@@ -102,4 +105,4 @@ def save(cfg: Config) -> None:
         "",
     ]
 
-    _CONFIG_PATH.write_text("\n".join(lines), encoding="utf-8")
+    cfg_path.write_text("\n".join(lines), encoding="utf-8")
