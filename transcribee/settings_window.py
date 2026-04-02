@@ -61,17 +61,19 @@ class SettingsWindowController(WebViewWindow):
                 except Exception:
                     pass
             return
-        if key in kwargs:
-            kwargs[key] = value
+        if key in kwargs and value.strip():  # don't overwrite with empty string
+            kwargs[key] = value.strip()
         cfg_mod.save(cfg_mod.Config(**kwargs))
         self._app.cfg = cfg_mod.load()
 
     # ── Public (keeps same interface as old controller) ───────────────────────
 
     def show(self) -> None:
+        already_built = self._window is not None
         super().show()
-        # Re-send init on every show so fields reflect latest config
-        if self._webview is not None:
+        # Re-send init so fields reflect latest config on re-open.
+        # On first open, on_load() fires via _NavDelegate after HTML loads.
+        if already_built and self._webview is not None:
             self.on_load()
 
     # ── Old AppKit factory shim (gui.py calls alloc().initWithApp_()) ─────────

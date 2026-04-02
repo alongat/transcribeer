@@ -126,7 +126,7 @@ class HistoryWindow(WebViewWindow):
             data["name"] = payload.get("name", "").strip()
             write_meta(sess, data)
             self._sessions = list_sessions(Path(self._cfg.sessions_dir))
-            query = payload.get("query", "")
+            query = payload.get("query", "").lower().strip()  # normalize
             rows = self._filtered_rows(query)
             self.send("sessions", {"sessions": rows})
 
@@ -197,7 +197,9 @@ class HistoryWindow(WebViewWindow):
     # ── Public ────────────────────────────────────────────────────────────────
 
     def show(self) -> None:
+        already_built = self._window is not None
         super().show()
-        # Re-send fresh session list on every open
-        if self._webview is not None:
+        # Refresh session list on re-open.
+        # On first open, on_load() fires via _NavDelegate after HTML loads.
+        if already_built and self._webview is not None:
             self.on_load()

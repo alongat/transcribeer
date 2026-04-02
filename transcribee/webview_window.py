@@ -164,10 +164,18 @@ class WebViewWindow:
         NSApp.activateIgnoringOtherApps_(True)
 
     def send(self, action: str, payload: Any = None) -> None:
-        """Push a message to JS: calls window.receive({action, payload})."""
+        """Push a message to JS: calls window.receive({action, payload}).
+
+        Safe to call from any thread — dispatches to the main queue.
+        """
         msg = json.dumps({"action": action, "payload": payload}, ensure_ascii=False)
         js = f"window.receive && window.receive({msg})"
-        self._webview.evaluateJavaScript_completionHandler_(js, None)
+        wv = self._webview
+        if wv is not None:
+            from Foundation import NSOperationQueue
+            NSOperationQueue.mainQueue().addOperationWithBlock_(
+                lambda: wv.evaluateJavaScript_completionHandler_(js, None)
+            )
 
     # ── Subclass hooks ────────────────────────────────────────────────────────
 
