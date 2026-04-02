@@ -1,4 +1,4 @@
-# transcribee
+# transcribeer
 
 macOS audio capture, transcription, and summarization — CLI-first, Hebrew + English.
 
@@ -18,22 +18,22 @@ Captures both sides of a call via system audio (SCStream), transcribes with fast
 ## Install
 
 ```bash
-git clone https://github.com/your-org/transcribee
-cd transcribee
+git clone https://github.com/your-org/transcribeer
+cd transcribeer
 bash install.sh
 ```
 
 The installer will:
 1. Check macOS version and architecture
 2. Install ffmpeg if missing (via Homebrew)
-3. Place `capture-bin` in `~/.transcribee/bin/`
-4. Create a Python venv at `~/.transcribee/venv/`
+3. Place `capture-bin` in `~/.transcribeer/bin/`
+4. Create a Python venv at `~/.transcribeer/venv/`
 5. Ask which diarization backend to install:
    - **pyannote** — best quality, requires a HuggingFace account and token
    - **resemblyzer** — no account needed, good quality
    - **none** — no speaker labels, fastest
-6. Write a default config to `~/.transcribee/config.toml`
-7. Symlink `transcribee` into `~/.local/bin/`
+6. Write a default config to `~/.transcribeer/config.toml`
+7. Symlink `transcribeer` into `~/.local/bin/`
 
 ---
 
@@ -42,14 +42,14 @@ The installer will:
 ### One-shot: record → transcribe → summarize
 
 ```bash
-transcribee run
+transcribeer run
 # or with a time limit:
-transcribee run --duration 300   # auto-stop after 5 minutes
+transcribeer run --duration 300   # auto-stop after 5 minutes
 ```
 
 Press `Ctrl+C` to stop recording. Transcription and summarization run automatically.
 
-Output saved to `~/.transcribee/sessions/YYYY-MM-DD-HHMM/`:
+Output saved to `~/.transcribeer/sessions/YYYY-MM-DD-HHMM/`:
 - `audio.wav`
 - `transcript.txt`
 - `summary.md`
@@ -57,9 +57,9 @@ Output saved to `~/.transcribee/sessions/YYYY-MM-DD-HHMM/`:
 ### Record only
 
 ```bash
-transcribee record                     # stop with Ctrl+C
-transcribee record --duration 60       # stop after 60 seconds
-transcribee record --out /tmp/call.wav # custom output path
+transcribeer record                     # stop with Ctrl+C
+transcribeer record --duration 60       # stop after 60 seconds
+transcribeer record --out /tmp/call.wav # custom output path
 ```
 
 macOS will prompt for **Screen & System Audio Recording** permission on first run.
@@ -67,10 +67,10 @@ macOS will prompt for **Screen & System Audio Recording** permission on first ru
 ### Transcribe an existing file
 
 ```bash
-transcribee transcribe call.wav
-transcribee transcribe call.wav --lang he          # force Hebrew
-transcribee transcribe call.wav --no-diarize       # skip speaker labels
-transcribee transcribe call.wav --out call.txt     # custom output path
+transcribeer transcribe call.wav
+transcribeer transcribe call.wav --lang he          # force Hebrew
+transcribeer transcribe call.wav --no-diarize       # skip speaker labels
+transcribeer transcribe call.wav --out call.txt     # custom output path
 ```
 
 Supported languages: `he` (Hebrew), `en` (English), `auto` (detect).
@@ -84,16 +84,16 @@ Output format:
 ### Summarize a transcript
 
 ```bash
-transcribee summarize call.txt
-transcribee summarize call.txt --backend openai    # override LLM backend
-transcribee summarize call.txt --out call.md       # custom output path
+transcribeer summarize call.txt
+transcribeer summarize call.txt --backend openai    # override LLM backend
+transcribeer summarize call.txt --out call.md       # custom output path
 ```
 
 ---
 
 ## Configuration
 
-`~/.transcribee/config.toml` is written by the installer. Edit it to change defaults:
+`~/.transcribeer/config.toml` is written by the installer. Edit it to change defaults:
 
 ```toml
 [transcription]
@@ -107,8 +107,8 @@ model = "llama3"
 ollama_host = "http://localhost:11434"
 
 [paths]
-sessions_dir = "~/.transcribee/sessions"
-capture_bin = "~/.transcribee/bin/capture-bin"
+sessions_dir = "~/.transcribeer/sessions"
+capture_bin = "~/.transcribeer/bin/capture-bin"
 ```
 
 ### LLM backends
@@ -134,15 +134,15 @@ Models are downloaded from HuggingFace on first use and cached at `~/.cache/hugg
 
 ## Permission
 
-On first `transcribee record` or `transcribee run`, macOS will request **Screen & System Audio Recording** permission. Grant it in **System Settings → Privacy & Security → Screen & System Audio Recording**.
+On first `transcribeer record` or `transcribeer run`, macOS will request **Screen & System Audio Recording** permission. Grant it in **System Settings → Privacy & Security → Screen & System Audio Recording**.
 
 ---
 
 ## Development
 
 ```bash
-git clone https://github.com/your-org/transcribee
-cd transcribee
+git clone https://github.com/your-org/transcribeer
+cd transcribeer
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 pytest

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 def _config_path() -> Path:
-    return Path.home() / ".transcribee" / "config.toml"
+    return Path.home() / ".transcribeer" / "config.toml"
 
 _DEFAULTS = {
     "transcription": {
@@ -19,8 +19,8 @@ _DEFAULTS = {
         "ollama_host": "http://localhost:11434",
     },
     "paths": {
-        "sessions_dir": "~/.transcribee/sessions",
-        "capture_bin": "~/.transcribee/bin/capture-bin",
+        "sessions_dir": "~/.transcribeer/sessions",
+        "capture_bin": "~/.transcribeer/bin/capture-bin",
     },
     "pipeline": {
         "mode": "record+transcribe+summarize",
@@ -48,7 +48,7 @@ class Config:
 
 
 def load() -> Config:
-    """Load ~/.transcribee/config.toml. Missing keys use defaults. Never raises."""
+    """Load ~/.transcribeer/config.toml. Missing keys use defaults. Never raises."""
     data: dict = {}
     cfg_path = _config_path()
     if cfg_path.exists():
@@ -75,7 +75,7 @@ def load() -> Config:
 
 
 def save(cfg: Config) -> None:
-    """Write cfg back to ~/.transcribee/config.toml (creates dirs as needed)."""
+    """Write cfg back to ~/.transcribeer/config.toml (creates dirs as needed)."""
     cfg_path = _config_path()
     cfg_path.parent.mkdir(parents=True, exist_ok=True)
 

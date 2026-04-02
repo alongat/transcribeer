@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TRANSCRIBEE_DIR="$HOME/.transcribee"
+TRANSCRIBEE_DIR="$HOME/.transcribeer"
 BIN_DIR="$TRANSCRIBEE_DIR/bin"
 VENV="$TRANSCRIBEE_DIR/venv"
 LOCAL_BIN="$HOME/.local/bin"
@@ -11,7 +11,7 @@ ok()   { echo "[✓] $*"; }
 fail() { echo "[✗] $*" >&2; exit 1; }
 info() { echo "    $*"; }
 
-echo "=== Transcribee Installer ==="
+echo "=== Transcribeer Installer ==="
 echo ""
 
 # ── 1. macOS version ──────────────────────────────────────────────────────────
@@ -113,9 +113,9 @@ case "$(echo "$diar_choice" | tr '[:lower:]' '[:upper:]')" in
     ;;
 esac
 
-# ── 7. Install transcribee package ───────────────────────────────────────────
+# ── 7. Install transcribeer package ───────────────────────────────────────────
 uv pip install -q -e "$REPO_DIR[gui]"
-ok "transcribee package installed"
+ok "transcribeer package installed"
 
 # ── 8. Write config ───────────────────────────────────────────────────────────
 mkdir -p "$TRANSCRIBEE_DIR/sessions"
@@ -134,8 +134,8 @@ model = "llama3"
 ollama_host = "http://localhost:11434"
 
 [paths]
-sessions_dir = "~/.transcribee/sessions"
-capture_bin = "~/.transcribee/bin/capture-bin"
+sessions_dir = "~/.transcribeer/sessions"
+capture_bin = "~/.transcribeer/bin/capture-bin"
 TOML
   ok "Config written → $CONFIG_FILE"
 else
@@ -144,9 +144,9 @@ fi
 
 # ── 9. PATH setup ─────────────────────────────────────────────────────────────
 mkdir -p "$LOCAL_BIN"
-ln -sf "$VENV/bin/transcribee" "$LOCAL_BIN/transcribee"
-ln -sf "$VENV/bin/transcribee-gui" "$LOCAL_BIN/transcribee-gui"
-ok "Symlinks → $LOCAL_BIN/{transcribee,transcribee-gui}"
+ln -sf "$VENV/bin/transcribeer" "$LOCAL_BIN/transcribeer"
+ln -sf "$VENV/bin/transcribeer-gui" "$LOCAL_BIN/transcribeer-gui"
+ok "Symlinks → $LOCAL_BIN/{transcribeer,transcribeer-gui}"
 
 if [[ ":$PATH:" != *":$LOCAL_BIN:"* ]]; then
   case "$SHELL" in
@@ -166,9 +166,9 @@ echo ""
 echo "=== Installation complete ==="
 echo ""
 echo "Usage:"
-echo "  transcribee-gui                   # launch menubar app"
-echo "  transcribee run --duration 300    # record 5 min, transcribe, summarize (CLI)"
-echo "  transcribee record                # record until Ctrl+C"
-echo "  transcribee transcribe audio.wav  # transcribe existing file"
-echo "  transcribee --help                # all commands"
+echo "  transcribeer-gui                   # launch menubar app"
+echo "  transcribeer run --duration 300    # record 5 min, transcribe, summarize (CLI)"
+echo "  transcribeer record                # record until Ctrl+C"
+echo "  transcribeer transcribe audio.wav  # transcribe existing file"
+echo "  transcribeer --help                # all commands"
 echo ""
