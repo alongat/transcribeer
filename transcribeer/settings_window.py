@@ -14,7 +14,7 @@ class SettingsWindowController(WebViewWindow):
     def __init__(self, app):
         super().__init__(
             html_name="settings",
-            title="Transcribee Settings",
+            title="Transcribeer Settings",
             width=_W,
             height=_H,
             resizable=False,
