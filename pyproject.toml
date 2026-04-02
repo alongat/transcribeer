@@ -1,6 +1,6 @@
 [project]
 name = "transcribeer"
-version = "0.1.0"
+version = "0.1.1"
 description = "Local-first meeting transcription and summarization for macOS"
 readme = "README.md"
 license = { text = "MIT" }

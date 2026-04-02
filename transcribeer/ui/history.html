@@ -196,6 +196,7 @@
     <div class="content-area" id="content-area"></div>
     <div class="bottom-bar">
       <span id="status-label" class="status-label"></span>
+      <button class="btn" onclick="onOpenDir()">Open in Finder</button>
       <button id="btn-transcribe" class="btn" onclick="onTranscribe()">Re-transcribe</button>
       <button id="btn-summarize" class="btn" onclick="onSummarize()">Re-summarize</button>
     </div>
@@ -299,6 +300,11 @@ function onSummarize() {
   document.getElementById("btn-summarize").disabled = true;
   document.getElementById("status-label").textContent = "Summarizing…";
   bridge("summarize", {session: _selected});
+}
+
+function onOpenDir() {
+  if (!_selected) return;
+  bridge("open_dir", {session: _selected});
 }
 
 function bridge(action, payload) {

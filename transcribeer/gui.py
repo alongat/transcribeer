@@ -388,7 +388,21 @@ class TranscribeerApp(rumps.App):
         )
 
 
+def _set_process_name(name: str) -> None:
+    """Set the process name so macOS Privacy dialogs show the app name."""
+    import ctypes
+    import ctypes.util
+    libc_path = ctypes.util.find_library("c")
+    if not libc_path:
+        return
+    try:
+        ctypes.CDLL(libc_path).setprogname(name.encode())
+    except Exception:
+        pass
+
+
 def main():
+    _set_process_name("Transcribeer")
     _load_shell_env()
     TranscribeerApp().run()
 

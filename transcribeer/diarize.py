@@ -46,6 +46,14 @@ def _run_pyannote(wav_path: Path, num_speakers: int | None) -> list[tuple[float,
 
 
 def _run_resemblyzer(wav_path: Path, num_speakers: int | None) -> list[tuple[float, float, str]]:
+    try:
+        import resemblyzer  # noqa: F401
+    except ImportError:
+        raise ImportError(
+            "resemblyzer is not installed. "
+            "Run: pip install 'transcribeer[resemblyzer]'  "
+            "or: pip install resemblyzer scikit-learn"
+        ) from None
     import numpy as np
     import resemblyzer
     from sklearn.cluster import AgglomerativeClustering

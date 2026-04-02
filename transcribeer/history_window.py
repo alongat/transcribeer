@@ -1,6 +1,7 @@
 """History window — WKWebView-based."""
 from __future__ import annotations
 
+import subprocess
 import threading
 import wave
 from datetime import datetime
@@ -137,6 +138,9 @@ class HistoryWindow(WebViewWindow):
             query = payload.get("query", "").lower().strip()
             rows = self._filtered_rows(query)
             self.send("sessions", {"sessions": rows})
+
+        elif action == "open_dir" and sess:
+            subprocess.run(["open", str(sess)], check=False)
 
         elif action == "transcribe" and sess:
             threading.Thread(
