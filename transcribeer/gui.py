@@ -279,14 +279,26 @@ class TranscribeerApp(rumps.App):
 
     def _run(self, sess: Path):
         from transcribeer import transcribe as tx, summarize as sm
+        import datetime
 
         cfg = self.cfg
         audio_path = sess / "audio.wav"
         transcript_path = sess / "transcript.txt"
         summary_path = sess / "summary.md"
+        log_path = sess / "run.log"
+
+        def log(msg: str) -> None:
+            ts = datetime.datetime.now().strftime("%H:%M:%S")
+            line = f"[{ts}] {msg}\n"
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(line)
+
+        log(f"session={sess}")
+        log(f"pipeline={cfg.pipeline_mode} lang={cfg.language} diarize={cfg.diarization}")
 
         # 1. Record
         self._set_recording()
+        log(f"capture-bin={cfg.capture_bin}")
         try:
             self._capture_proc = subprocess.Popen(
                 [str(cfg.capture_bin), str(audio_path)],
@@ -300,15 +312,20 @@ class TranscribeerApp(rumps.App):
 
             if rc != 0 and not self._stop_event.is_set():
                 err = stderr.decode("utf-8", errors="replace")
+                log(f"capture-bin exited {rc}: {err.strip()}")
                 if "Screen & System Audio Recording" in err:
                     return self._set_error("Grant Screen Recording in System Settings → Privacy")
                 return self._set_error(f"capture-bin exited {rc}")
 
             if not audio_path.exists() or audio_path.stat().st_size == 0:
+                log("audio file missing or empty after recording")
                 return self._set_idle()
+
+            log(f"recorded {audio_path.stat().st_size // 1024} KB")
         except Exception as e:
             self._capture_proc = None
             self._record_start = None
+            log(f"capture exception: {e}")
             return self._set_error(str(e))
 
         mode = cfg.pipeline_mode  # "record-only" | "record+transcribe" | "record+transcribe+summarize"
@@ -318,6 +335,7 @@ class TranscribeerApp(rumps.App):
 
         # 2. Transcribe
         self._set_status("📝 Transcribing…")
+        log("transcription started")
         try:
             tx.run(
                 audio_path=audio_path,
@@ -326,7 +344,9 @@ class TranscribeerApp(rumps.App):
                 num_speakers=cfg.num_speakers,
                 out_path=transcript_path,
             )
+            log("transcription done")
         except Exception as e:
+            log(f"transcription failed: {e}")
             return self._set_error(f"Transcription failed: {e}")
 
         if mode == "record+transcribe":
@@ -334,6 +354,7 @@ class TranscribeerApp(rumps.App):
 
         # 3. Summarize
         self._set_status("🤔 Summarizing…")
+        log(f"summarization started backend={cfg.llm_backend} model={cfg.llm_model}")
         summary_err: str | None = None
         try:
             summary = sm.run(
@@ -343,8 +364,10 @@ class TranscribeerApp(rumps.App):
                 ollama_host=cfg.ollama_host,
             )
             summary_path.write_text(summary, encoding="utf-8")
+            log("summarization done")
         except Exception as e:
             summary_err = str(e)
+            log(f"summarization failed: {e}")
 
         self._set_done(summary_err)
 
