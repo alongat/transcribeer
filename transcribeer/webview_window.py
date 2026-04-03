@@ -149,19 +149,20 @@ class WebViewWindow:
 
         self._load_html()
 
-    def _load_html(self) -> None:
-        html_path = _UI_DIR / f"{self._html_name}.html"
-        url = NSURL.fileURLWithPath_(str(html_path))
-        base = NSURL.fileURLWithPath_(str(_UI_DIR))
-        self._webview.loadFileURL_allowingReadAccessToURL_(url, base)
-
-    # ── Public API ────────────────────────────────────────────────────────────
-
     def show(self) -> None:
         if self._window is None:
             self._build()
         self._window.makeKeyAndOrderFront_(None)
         NSApp.activateIgnoringOtherApps_(True)
+        # Menu bar apps don't auto-focus window contents — make the WebView
+        # first responder so text fields accept keyboard input immediately.
+        self._window.makeFirstResponder_(self._webview)
+
+    def _load_html(self) -> None:
+        html_path = _UI_DIR / f"{self._html_name}.html"
+        url = NSURL.fileURLWithPath_(str(html_path))
+        base = NSURL.fileURLWithPath_(str(_UI_DIR))
+        self._webview.loadFileURL_allowingReadAccessToURL_(url, base)
 
     def send(self, action: str, payload: Any = None) -> None:
         """Push a message to JS: calls window.receive({action, payload}).
