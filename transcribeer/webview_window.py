@@ -149,19 +149,22 @@ class WebViewWindow:
 
         self._load_html()
 
+    def show(self) -> None:
+        if self._window is None:
+            self._build()
+        # LSUIElement (accessory) apps can't reliably acquire keyboard focus.
+        # Temporarily switch to Regular activation policy so the OS routes
+        # keystrokes to this window, then revert to Accessory on close.
+        NSApp.setActivationPolicy_(0)  # NSApplicationActivationPolicyRegular
+        NSApp.activateIgnoringOtherApps_(True)
+        self._window.makeKeyAndOrderFront_(None)
+        self._window.makeFirstResponder_(self._webview)
+
     def _load_html(self) -> None:
         html_path = _UI_DIR / f"{self._html_name}.html"
         url = NSURL.fileURLWithPath_(str(html_path))
         base = NSURL.fileURLWithPath_(str(_UI_DIR))
         self._webview.loadFileURL_allowingReadAccessToURL_(url, base)
-
-    # ── Public API ────────────────────────────────────────────────────────────
-
-    def show(self) -> None:
-        if self._window is None:
-            self._build()
-        self._window.makeKeyAndOrderFront_(None)
-        NSApp.activateIgnoringOtherApps_(True)
 
     def send(self, action: str, payload: Any = None) -> None:
         """Push a message to JS: calls window.receive({action, payload}).
@@ -185,5 +188,6 @@ class WebViewWindow:
     def on_load(self) -> None:  # noqa: B027
         """Override in subclass. Called once after HTML finishes loading."""
 
-    def on_close(self) -> None:  # noqa: B027
-        """Override in subclass. Called when the window is closed."""
+    def on_close(self) -> None:
+        """Called when the window is closed. Reverts activation policy."""
+        NSApp.setActivationPolicy_(1)  # NSApplicationActivationPolicyAccessory

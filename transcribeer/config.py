@@ -4,15 +4,6 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-def _resolve_capture_bin(configured: Path) -> Path:
-    """Fall back to old ~/.transcribee path during migration."""
-    if configured.exists():
-        return configured
-    old = Path.home() / ".transcribee" / "bin" / "capture-bin"
-    if old.exists():
-        return old
-    return configured  # preserve original so the error message shows the right path
-
 
 def _config_path() -> Path:
     return Path.home() / ".transcribeer" / "config.toml"
@@ -27,6 +18,7 @@ _DEFAULTS = {
         "backend": "ollama",
         "model": "llama3",
         "ollama_host": "http://localhost:11434",
+        "prompt_on_stop": True,
     },
     "paths": {
         "sessions_dir": "~/.transcribeer/sessions",
@@ -55,6 +47,7 @@ class Config:
     sessions_dir: Path
     capture_bin: Path
     pipeline_mode: str = "record+transcribe+summarize"
+    prompt_on_stop: bool = True
 
 
 def load() -> Config:
@@ -79,8 +72,9 @@ def load() -> Config:
         llm_model=get("summarization", "model"),
         ollama_host=get("summarization", "ollama_host"),
         sessions_dir=Path(get("paths", "sessions_dir")).expanduser(),
-        capture_bin=_resolve_capture_bin(Path(get("paths", "capture_bin")).expanduser()),
+        capture_bin=Path(get("paths", "capture_bin")).expanduser(),
         pipeline_mode=get("pipeline", "mode"),
+        prompt_on_stop=bool(get("summarization", "prompt_on_stop")),
     )
 
 
@@ -89,10 +83,8 @@ def save(cfg: Config) -> None:
     cfg_path = _config_path()
     cfg_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Represent num_speakers: None -> 0 (auto)
     raw_speakers = 0 if cfg.num_speakers is None else cfg.num_speakers
 
-    # Manual TOML serialisation — avoids tomli_w dep for simple flat structure
     lines: list[str] = []
 
     lines += [
@@ -108,6 +100,7 @@ def save(cfg: Config) -> None:
         f'backend = "{cfg.llm_backend}"',
         f'model = "{cfg.llm_model}"',
         f'ollama_host = "{cfg.ollama_host}"',
+        f"prompt_on_stop = {'true' if cfg.prompt_on_stop else 'false'}",
         "",
         "[paths]",
         f'sessions_dir = "{cfg.sessions_dir}"',

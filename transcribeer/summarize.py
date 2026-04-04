@@ -18,24 +18,27 @@ def run(
     backend: str,
     model: str,
     ollama_host: str = "http://localhost:11434",
+    prompt: str | None = None,
 ) -> str:
     """
     Summarize a transcript using the configured LLM backend.
 
+    prompt: custom system prompt; None uses the built-in SYSTEM_PROMPT.
     Reads OPENAI_API_KEY / ANTHROPIC_API_KEY from env as needed.
     Raises ValueError if a required env var is missing.
     Raises ValueError for unknown backend.
     """
+    system = prompt if prompt is not None else SYSTEM_PROMPT
     if backend == "openai":
-        return _run_openai(transcript, model)
+        return _run_openai(transcript, model, system)
     if backend == "anthropic":
-        return _run_anthropic(transcript, model)
+        return _run_anthropic(transcript, model, system)
     if backend == "ollama":
-        return _run_ollama(transcript, model, ollama_host)
+        return _run_ollama(transcript, model, ollama_host, system)
     raise ValueError(f"Unknown summarization backend: {backend!r}. Use 'openai', 'anthropic', or 'ollama'.")
 
 
-def _run_openai(transcript: str, model: str) -> str:
+def _run_openai(transcript: str, model: str, system: str) -> str:
     api_key = _kc_get("openai") or os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise ValueError("No OpenAI API key found (Keychain or OPENAI_API_KEY env var).")
@@ -44,14 +47,14 @@ def _run_openai(transcript: str, model: str) -> str:
     response = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system},
             {"role": "user", "content": transcript},
         ],
     )
     return response.choices[0].message.content
 
 
-def _run_anthropic(transcript: str, model: str) -> str:
+def _run_anthropic(transcript: str, model: str, system: str) -> str:
     api_key = _kc_get("anthropic") or os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise ValueError("No Anthropic API key found (Keychain or ANTHROPIC_API_KEY env var).")
@@ -60,7 +63,7 @@ def _run_anthropic(transcript: str, model: str) -> str:
     response = client.messages.create(
         model=model,
         max_tokens=1024,
-        system=SYSTEM_PROMPT,
+        system=system,
         messages=[
             {"role": "user", "content": transcript},
         ],
@@ -68,14 +71,14 @@ def _run_anthropic(transcript: str, model: str) -> str:
     return response.content[0].text
 
 
-def _run_ollama(transcript: str, model: str, ollama_host: str) -> str:
+def _run_ollama(transcript: str, model: str, ollama_host: str, system: str) -> str:
     import requests
     response = requests.post(
         f"{ollama_host}/api/chat",
         json={
             "model": model,
             "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": system},
                 {"role": "user", "content": transcript},
             ],
             "stream": False,

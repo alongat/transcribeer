@@ -12,10 +12,11 @@ help:
 
 # ── Python menubar GUI ────────────────────────────────────────────────────────
 gui:
-	uv run transcribeer-gui
+	uv run --extra gui transcribeer-gui
 
 # ── capture-bin ───────────────────────────────────────────────────────────────
 capture:
+	mkdir -p $(BIN_DIR)
 	cd capture && swift build -c release -q
 	cp capture/.build/release/capture $(BIN_DIR)/capture-bin
 	chmod +x $(BIN_DIR)/capture-bin

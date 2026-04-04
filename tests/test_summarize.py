@@ -92,3 +92,36 @@ def test_prompt_contains_transcript():
     call_body = mock_post.call_args.kwargs["json"]
     messages_str = str(call_body["messages"])
     assert "unique_marker_xyz" in messages_str
+
+
+def test_custom_prompt_sent_to_ollama():
+    """Custom prompt is used as the system message, not SYSTEM_PROMPT."""
+    mock_resp = MagicMock()
+    mock_resp.json.return_value = {"message": {"content": "ok"}}
+    mock_resp.raise_for_status = MagicMock()
+
+    from unittest.mock import patch
+    with patch("requests.post", return_value=mock_resp) as mock_post:
+        from transcribeer.summarize import run
+        run("transcript text", backend="ollama", model="llama3",
+            prompt="MY CUSTOM PROMPT")
+
+    body = mock_post.call_args.kwargs["json"]
+    system_msg = body["messages"][0]["content"]
+    assert system_msg == "MY CUSTOM PROMPT"
+
+
+def test_none_prompt_uses_system_prompt():
+    """Passing prompt=None falls back to SYSTEM_PROMPT."""
+    mock_resp = MagicMock()
+    mock_resp.json.return_value = {"message": {"content": "ok"}}
+    mock_resp.raise_for_status = MagicMock()
+
+    from unittest.mock import patch
+    with patch("requests.post", return_value=mock_resp) as mock_post:
+        from transcribeer.summarize import run, SYSTEM_PROMPT
+        run("transcript text", backend="ollama", model="llama3", prompt=None)
+
+    body = mock_post.call_args.kwargs["json"]
+    system_msg = body["messages"][0]["content"]
+    assert system_msg == SYSTEM_PROMPT
