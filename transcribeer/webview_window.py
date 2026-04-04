@@ -152,10 +152,12 @@ class WebViewWindow:
     def show(self) -> None:
         if self._window is None:
             self._build()
-        self._window.makeKeyAndOrderFront_(None)
+        # LSUIElement (accessory) apps can't reliably acquire keyboard focus.
+        # Temporarily switch to Regular activation policy so the OS routes
+        # keystrokes to this window, then revert to Accessory on close.
+        NSApp.setActivationPolicy_(0)  # NSApplicationActivationPolicyRegular
         NSApp.activateIgnoringOtherApps_(True)
-        # Menu bar apps don't auto-focus window contents — make the WebView
-        # first responder so text fields accept keyboard input immediately.
+        self._window.makeKeyAndOrderFront_(None)
         self._window.makeFirstResponder_(self._webview)
 
     def _load_html(self) -> None:
@@ -186,5 +188,6 @@ class WebViewWindow:
     def on_load(self) -> None:  # noqa: B027
         """Override in subclass. Called once after HTML finishes loading."""
 
-    def on_close(self) -> None:  # noqa: B027
-        """Override in subclass. Called when the window is closed."""
+    def on_close(self) -> None:
+        """Called when the window is closed. Reverts activation policy."""
+        NSApp.setActivationPolicy_(1)  # NSApplicationActivationPolicyAccessory
